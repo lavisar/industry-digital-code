@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Squash the current branch into a single orphan commit.
+#
+# This replaces the branch history with one commit whose tree is identical
+# to HEAD. The resulting commit has no parent (orphan), so `git log` will
+# show exactly one entry.
+#
+# Usage: scripts/squash [commit message]
+#   If no message is supplied, defaults to "Initial commit".
+
+message="${1:-Initial commit}"
+branch="$(git symbolic-ref --short HEAD)"
+
+# Create a new orphan branch, stage the current tree, and commit.
+git checkout --orphan _squash_tmp
+git add -A
+git commit -m "$message"
+
+# Point the original branch at the new single commit, then clean up.
+git branch -M _squash_tmp "$branch"
