@@ -6,11 +6,14 @@
  */
 
 export enum EffectType {
-  POISONED,
-  STUNNED,
-  WEAKENED,
-  BLESSED,
+  POISONED = 0,
+  STUNNED = 1,
+  WEAKENED = 2,
+  BLESSED = 3,
 }
+
+/** Total number of effect types. */
+export const EFFECT_TYPE_COUNT = Object.keys(EffectType).length / 2;
 
 /**
  * Display labels for effect types, consumed by the narrative renderer.

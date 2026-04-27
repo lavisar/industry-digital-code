@@ -1,11 +1,5 @@
 /**
  * TICK_EFFECTS command and reducer.
- *
- * The command advances the status effects clock. The reducer walks every
- * actor in the world, ticks their effects,
- * and declares an EffectDidEnd event for every effect that expired.
- *
- * The command class is provided. Implement the reducer.
  */
 
 import {
@@ -16,9 +10,8 @@ import {
   withCommandType,
 } from '../scaffold';
 
-// Import your implementations:
-// import { tickEffects } from '../effects/effects';
-// import { EffectDidEnd } from '../effects/events';
+import { tickEffects, EXPIRED_EFFECTS_BUFFER_SIZE, type ExpiredEffectsBuffer } from '../effects/effects';
+import { EffectDidEnd } from '../effects/events';
 
 // ---------------------------------------------------------------------------
 // Command
@@ -32,18 +25,31 @@ export class TickEffectsCommand extends AbstractCommand<CommandType.TICK_EFFECTS
 // Reducer
 // ---------------------------------------------------------------------------
 
-/**
- * Implement the reducer:
- *
- *   1. Walk every actor in the world.
- *   2. Call tickEffects on each actor's effects container.
- *   3. Declare an EffectDidEnd event for every effect that expired.
- *   4. Return context.
- */
 const reducerCore: Transformer<TickEffectsCommand> = (
   context, command,
 ): TransformerContext => {
-  // Implement me
+  const now = context.timestamp[0];
+  const expiredBuffer: ExpiredEffectsBuffer = [];
+
+  // Pre-size the buffer to avoid dynamic growth during tick
+  for (let i = 0; i < EXPIRED_EFFECTS_BUFFER_SIZE; i++) {
+    expiredBuffer.push(0);
+  }
+
+  for (const actor of context.world.actors.values()) {
+    const count = tickEffects(actor.effects, now, expiredBuffer);
+    for (let i = 0; i < count; i++) {
+      const effectType = expiredBuffer[i]!;
+      context.declareEvent(
+        EffectDidEnd,
+        command.id,
+        actor.id,
+        actor.location,
+        effectType,
+      );
+    }
+  }
+
   return context;
 };
 
